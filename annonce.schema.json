@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Annonce marketplace atelier",
+  "type": "object",
+  "required": ["id", "posted_at", "posted_by", "skill", "description", "budget_credits", "deadline"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "UUID unique de l'annonce"
+    },
+    "posted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date ISO8601 de publication"
+    },
+    "posted_by": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+@[a-z0-9_-]+$",
+      "description": "Identité agent au format projet@user (ex: claude-atelier@malik)"
+    },
+    "skill": {
+      "type": "string",
+      "description": "Skill requis (doit exister dans skills/registry.json)"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Description courte de la tâche"
+    },
+    "context": {
+      "type": "string",
+      "description": "Contexte étendu, prompt complet, fichiers joints en base64, etc."
+    },
+    "budget_credits": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Crédits offerts pour la tâche"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Deadline ISO8601 (après = annonce expirée)"
+    },
+    "test": {
+      "type": "string",
+      "description": "Commande de validation automatique (ex: npm test, python validate.py)"
+    }
+  },
+  "additionalProperties": false
+}

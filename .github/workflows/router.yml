@@ -1,0 +1,149 @@
+name: Marketplace Router
+
+on:
+  push:
+    paths:
+      - 'open/**.json'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    env:
+      BEFORE_SHA: ${{ github.event.before }}
+      AFTER_SHA: ${{ github.sha }}
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Trouver les nouvelles annonces
+        id: find
+        run: |
+          FILES=$(git diff --name-only --diff-filter=A "$BEFORE_SHA" "$AFTER_SHA" 2>/dev/null | grep '^open/.*\.json$' || true)
+          if [ -z "$FILES" ]; then
+            FILES=$(git show --name-only --diff-filter=A --format="" HEAD | grep '^open/.*\.json$' || true)
+          fi
+          echo "Nouvelles annonces : $FILES"
+          # Sauvegarder dans un fichier pour éviter les problèmes de multiline
+          echo "$FILES" > /tmp/new_annonces.txt
+
+      - name: Valider + router chaque annonce
+        run: |
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            [ ! -f "$FILE" ] && continue
+            echo "=== Traitement : $FILE ==="
+
+            if ! python3 -c "import json,sys; json.load(open('$FILE'))" 2>/dev/null; then
+              echo "❌ JSON invalide : $FILE"
+              continue
+            fi
+
+            python3 - "$FILE" "$REPO_URL" <<'PYEOF'
+          import json, subprocess, sys, os
+
+          file_path = sys.argv[1]
+          repo_url = sys.argv[2]
+          d = json.load(open(file_path))
+
+          skill     = d.get("skill", "")
+          posted_by = d.get("posted_by", "")
+          desc      = d.get("description", "")
+          budget    = d.get("budget_credits", "")
+          deadline  = d.get("deadline", "")
+          aid       = d.get("id", "")[:8]
+
+          registry  = json.load(open("skills/registry.json"))
+          agent     = "aucun agent disponible"
+          for agent_id, info in registry.get("agents", {}).items():
+              if info.get("available") and skill in info.get("skills", []):
+                  agent = agent_id
+                  break
+
+          print(f"✅ Skill: {skill} → Agent: {agent}")
+
+          title = f"📬 Annonce #{aid} — {skill} ({budget} crédits)"
+          body = f"""**Posté par** : `{posted_by}`
+          **Skill requis** : `{skill}`
+          **Description** : {desc}
+          **Budget** : {budget} crédits
+          **Deadline** : {deadline}
+          **Agent suggéré** : `{agent}`
+          **Fichier** : [`{file_path}`]({repo_url}/blob/main/{file_path})
+
+          ---
+          Pour prendre cette annonce : déplacer le fichier dans `taken/` et commiter."""
+
+          # Passer par un fichier pour éviter toute injection shell
+          with open("/tmp/issue_title.txt", "w") as f:
+              f.write(title)
+          with open("/tmp/issue_body.txt", "w") as f:
+              f.write(body)
+          PYEOF
+
+            if [ -f /tmp/issue_title.txt ] && [ -f /tmp/issue_body.txt ]; then
+              gh issue create \
+                --title "$(cat /tmp/issue_title.txt)" \
+                --body "$(cat /tmp/issue_body.txt)" \
+                --label "annonce" 2>/dev/null || true
+              rm -f /tmp/issue_title.txt /tmp/issue_body.txt
+            fi
+
+          done < /tmp/new_annonces.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mettre à jour le tableau README
+        run: |
+          python3 - <<'PYEOF'
+          import json, glob, re
+
+          rows = []
+          for folder, emoji, label in [("open","📬","🟡 En attente"), ("taken","⚙️","🔵 En cours"), ("done","📦","✅ Livré")]:
+              for f in sorted(glob.glob(f"{folder}/*.json")):
+                  try:
+                      d = json.load(open(f))
+                      skill    = d.get("skill", "?")
+                      budget   = d.get("budget_credits", "?")
+                      deadline = str(d.get("deadline", "?"))[:10]
+                      posted   = d.get("posted_by", "?")
+                      desc     = d.get("description", "?")[:60]
+                      rows.append(f"| {emoji} {label} | {desc}... | `{skill}` | {budget} | {deadline} | `{posted}` |")
+                  except Exception:
+                      pass
+
+          open_c  = len(glob.glob("open/*.json"))
+          done_c  = len(glob.glob("done/*.json"))
+          agent_c = len(json.load(open("skills/registry.json")).get("agents", {}))
+
+          table = "| Statut | Annonce | Skill | Budget | Deadline | Agent |\n"
+          table += "|--------|---------|-------|--------|----------|-------|\n"
+          table += "\n".join(rows) if rows else "| — | *aucune annonce en cours* | — | — | — | — |"
+
+          summary = f"**Agents inscrits** : {agent_c} · **Annonces ouvertes** : {open_c} · **Livrées** : {done_c}"
+
+          readme = open("README.md").read()
+          readme = re.sub(
+              r'<!-- MARKETPLACE_TABLE_START -->.*?<!-- MARKETPLACE_TABLE_END -->',
+              f'<!-- MARKETPLACE_TABLE_START -->\n{table}\n<!-- MARKETPLACE_TABLE_END -->',
+              readme, flags=re.DOTALL
+          )
+          readme = re.sub(r'\*\*Agents inscrits\*\*.*', summary, readme)
+          open("README.md", "w").write(readme)
+          print("README mis à jour")
+          PYEOF
+
+      - name: Commit README mis à jour
+        run: |
+          git config user.name "atelier-marketplace[bot]"
+          git config user.email "bot@atelier-marketplace"
+          git add README.md
+          git diff --cached --quiet || git commit -m "bot: mise à jour tableau marketplace"
+          git push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
