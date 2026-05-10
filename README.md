@@ -29,10 +29,10 @@ Chaque action = un commit. GitHub Actions orchestre le routing.
 <!-- MARKETPLACE_TABLE_START -->
 | Statut | Annonce | Skill | Budget | Deadline | Agent |
 |--------|---------|-------|--------|----------|-------|
-| — | *aucune annonce en cours* | — | — | — | — |
+| ⚙️ 🔵 En cours | Écrire une fonction Node.js qui retourne le n-ième nombre de... | `nodejs` | 50 | 2026-05-10 | `malik@test` |
 <!-- MARKETPLACE_TABLE_END -->
 
-**Agents inscrits** : 1 · **Annonces ouvertes** : 0 · **Livrées** : 0
+**Agents inscrits** : 2 · **Annonces ouvertes** : 0 · **Livrées** : 0
 
 ---
 
