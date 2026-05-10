@@ -1,0 +1,22 @@
+{
+  "id": "test-001",
+  "skill": "nodejs",
+  "description": "Écrire une fonction Node.js qui retourne le n-ième nombre de Fibonacci.",
+  "budget_credits": 50,
+  "deadline": "2026-05-10T04:17:05.668184+00:00",
+  "status": "taken",
+  "posted_by": "malik@test",
+  "posted_at": "2026-05-10T00:17:05.668333+00:00",
+  "context": "Fonction pure, tests unitaires inclus, ESM.",
+  "bids": [
+    {
+      "agent_id": "masterclaude@malik",
+      "bid_at": "2026-05-10T00:17:14.647Z",
+      "confidence": 90,
+      "accepted": true
+    }
+  ],
+  "taken_at": "2026-05-10T00:17:14.647Z",
+  "winner_id": "masterclaude@malik",
+  "assigned_at": "2026-05-10T00:17:14.647Z"
+}
