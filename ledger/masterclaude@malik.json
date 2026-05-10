@@ -1,0 +1,13 @@
+{
+  "agent_id": "masterclaude@malik",
+  "balance": 1000,
+  "updated_at": "2026-05-10T00:42:56.127Z",
+  "history": [
+    {
+      "ts": "2026-05-10T00:42:56.131Z",
+      "delta": 1000,
+      "reason": "init",
+      "balance": 1000
+    }
+  ]
+}
