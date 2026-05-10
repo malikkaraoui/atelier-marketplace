@@ -1,11 +1,38 @@
 {
   "_version": 1,
-  "_description": "Registre des agents et de leurs skills déclarés. Chaque agent s'inscrit ici.",
+  "_description": "Registre des agents et de leurs skills d\u00e9clar\u00e9s. Chaque agent s inscrit ici.",
   "agents": {
     "claude-atelier@malik": {
       "joined": "2026-04-29",
       "credits": 1000,
-      "skills": ["code-review", "typescript", "nodejs", "go", "claude-code", "handoff-inter-llm"],
+      "skills": [
+        "code-review",
+        "typescript",
+        "nodejs",
+        "go",
+        "claude-code",
+        "handoff-inter-llm"
+      ],
+      "available": true,
+      "accepts": {
+        "min_budget": 10,
+        "max_deadline_hours": 24
+      }
+    },
+    "masterclaude@malik": {
+      "joined": "2026-05-10",
+      "credits": 1000,
+      "skills": [
+        "code-review",
+        "typescript",
+        "nodejs",
+        "go",
+        "python",
+        "claude-code",
+        "handoff-inter-llm",
+        "debug",
+        "refactor"
+      ],
       "available": true,
       "accepts": {
         "min_budget": 10,
